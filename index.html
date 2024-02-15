@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>GEOG 487: Esri JavaScript Web Application</title>
+  <h1>
+    <img src="https://uofwaterloo-my.sharepoint.com/:i:/r/personal/s336park_uwaterloo_ca/Documents/GEOG%20487%20Web%20Mapping/University-of-Waterloo-Logo-Horizontal-1024x288.jpg?csf=1&web=1&e=dDq6CZ" alt="Image">
+    Flood Risk Map of Fredericton, New Brunswick
+  </h1>
+  <style>
+    h1 {
+      margin: 0px;
+      color: white;
+      background-color: rgb(0, 121, 193);
+      padding: 20px;
+    }
+    img {
+      width: 120px;
+      margin-right: 10px;
+    }
+    /* Map */
+    #viewDiv {
+      height: calc(90vh - 20px);
+      width: 100%;
+      position: relative;
+    }
+    /* Layer List */
+    #layerList {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+    /* Toggle Button */
+    #toggleLayerList {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+    #toggleLayerList img {
+      width: 40px;
+    }
+    /* Information Window */
+    #infoWindow {
+      position: absolute;
+      top: 220px;
+      left: 24px;
+      background-color: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      display: none;
+      width: 300px;
+    }
+    .closeButton {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      cursor: pointer;
+    }
+  </style>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.24/esri/themes/light/main.css">
+  <script src="https://js.arcgis.com/4.24/"></script>
+  <script>
+    require([
+      "esri/config",
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/widgets/Legend",
+      "esri/widgets/LayerList",
+      "esri/layers/FeatureLayer",
+      "esri/layers/TileLayer"
+    ], function(esriConfig, Map, MapView, Legend, LayerList, FeatureLayer, TileLayer) {
+
+      // API key
+      esriConfig.apiKey = "AAPK7286e3d2a7e9491ab1df9a0901a9753bTV_uMAgvXjTJPy7dBJ6Xm3aZdSuQZNdDwSWpurmrxGMiggV1BCQmqmfx2gQ9SYkg";
+
+      // Create a map centered on Fredericton
+      var map = new Map({
+        basemap: "topo-vector"
+      });
+
+      var view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [-66.6475, 45.9500],
+        zoom: 11
+      });
+
+      // Add the city boundary layer
+      var cityBoundaryLayer = new FeatureLayer({
+        url: "https://services2.arcgis.com/iLWAxhpxafhOza2U/arcgis/rest/services/CityBoundaryOD/FeatureServer/14/query?outFields=*&where=1%3D1&f=geojson",
+        title: "City Boundary"
+      });
+      map.add(cityBoundaryLayer);
+
+      // Add the Critical Infrastructure layer
+      var Critical_Infrastructure = new FeatureLayer({
+        url: "https://services1.arcgis.com/56dETZIzFXStwLka/arcgis/rest/services/Lower_Wolastoq_Flooding___Assets_WFL1/FeatureServer/1",
+        title: "Critical Infrastructure"
+      });
+      Critical_Infrastructure.visible = false;
+      map.add(Critical_Infrastructure);
+
+      // Add the 1973 Flood Extent
+      var Flood_Extent_1973 = new FeatureLayer({
+        url: "https://services1.arcgis.com/56dETZIzFXStwLka/arcgis/rest/services/Lower_Wolastoq_Flooding___Assets_WFL1/FeatureServer/9",
+        renderer: {
+          type: "simple",
+          symbol: {
+              type: "simple-fill",
+              color: [40, 166, 224, 0.9],  // 1973 Fill Color
+              outline: {
+                  color: [0, 0, 0],
+                  width: 1
+              }
+          }
+        },
+        title: "1973 Flood Extent"
+      });
+      Flood_Extent_1973.visible = false;
+      map.add(Flood_Extent_1973);
+
+      // Add the 2008 Flood Extent
+      var Flood_Extent_2008 = new FeatureLayer({
+        url: "https://services1.arcgis.com/56dETZIzFXStwLka/arcgis/rest/services/Lower_Wolastoq_Flooding___Assets_WFL1/FeatureServer/8",
+        renderer: {
+          type: "simple",
+          symbol: {
+              type: "simple-fill",
+              color: [119, 191, 224],  // 2008 Fill Color
+              outline: {
+                  color: [0, 0, 0],
+                  width: 1
+              }
+          }
+        },
+        title: "2008 Flood Extent"
+      });
+      Flood_Extent_2008.visible = false;
+      map.add(Flood_Extent_2008);
+
+      // Add the 2018 Flood Extent
+      var Flood_Extent_2018 = new FeatureLayer({
+        url: "https://services1.arcgis.com/56dETZIzFXStwLka/arcgis/rest/services/Lower_Wolastoq_Flooding___Assets_WFL1/FeatureServer/7",
+        renderer: {
+          type: "simple",
+          symbol: {
+              type: "simple-fill",
+              color: [204, 227, 237],  // 2018 Fill Color
+              outline: {
+                  color: [0, 0, 0],
+                  width: 1
+              }
+          }
+        },
+        title: "2018 Flood Extent"
+      });
+      Flood_Extent_2018.visible = false;
+      map.add(Flood_Extent_2018);
+
+      // Add the Flood Risk Level Layer
+      var Flood_Risk_Level = new TileLayer({
+        url: "https://tiles.arcgis.com/tiles/56dETZIzFXStwLka/arcgis/rest/services/Lower_Wolastoq_Flooding___Assets_WTL1/MapServer",
+        opacity: 0.5,
+        title: "Flood Risk Level"
+      });
+      map.add(Flood_Risk_Level);
+
+      map.reorder(cityBoundaryLayer, map.layers.length - 1);
+
+      // Add the LayerList widget
+      var layerList = new LayerList({
+        view: view,
+        container: "layerList"
+      });
+      view.ui.add(layerList, "top-right");
+
+      // Add Legend
+      var legend = new Legend({
+        view: view,
+        container: "legendDiv"
+      });
+      view.ui.add(legend, "bottom-left");
+
+      // Add Toggle Button
+      var toggleButton = document.createElement("button");
+      toggleButton.id = "toggleLayerList";
+      toggleButton.style.position = "absolute";
+      toggleButton.style.top = "10px";
+      toggleButton.style.right = "10px";
+      toggleButton.style.backgroundColor = "transparent";
+      toggleButton.style.padding = "0";
+      toggleButton.style.border = "none";
+      toggleButton.style.zIndex = "1000";
+      toggleButton.innerHTML = '<img src="https://uofwaterloo-my.sharepoint.com/:i:/r/personal/s336park_uwaterloo_ca/Documents/GEOG%20487%20Web%20Mapping/Icon_Layers.jpg?csf=1&web=1&e=VWE98M" width="40">';
+      document.body.appendChild(toggleButton);
+
+      var layerListContainer = document.getElementById("layerList");
+      toggleButton.addEventListener("click", function() {
+        if (layerListContainer.style.display === "none") {
+          layerListContainer.style.display = "block";
+        } else {
+          layerListContainer.style.display = "none";
+        }
+      });
+
+      // Add Information Window
+      var infoButton = document.createElement("button");
+      infoButton.id = "infoButton";
+      infoButton.style.position = "absolute";
+      infoButton.style.top = "15px";
+      infoButton.style.right = "150px";
+      infoButton.textContent = "About Flood Risk Level Layer";
+      document.body.appendChild(infoButton);
+
+      var infoWindow = document.createElement("div");
+      infoWindow.id = "infoWindow";
+      infoWindow.textContent = "The Lower Wolastoq Flooding Assets WTL1 layer provides information on the predicted flood risk level of the location. The layer was created using a combination of hydrological characteristics\
+                                including slope, Euclidean distance to streams, rainfall, and landcover, with information derived from the DIgital Elevation Model (DEM) of the study area. Slope and distance to streams were directly calculated from\
+                                the DEM, rainfall data was collected from the average monthly rainfall data of 2020, and landcover data was obtained from the Esri database.\
+                                These four factors were indexed and weighted on a scale of 1 to 5, then overlaied and analyzed together to produce the flood risk level layer, providing insights into the areas susceptible to flooding.";
+      document.body.appendChild(infoWindow);
+
+      // Add Close Button to Info Window
+      var closeButton = document.createElement("button");
+      closeButton.className = "closeButton";
+      closeButton.textContent = "X";
+      infoWindow.appendChild(closeButton);
+
+      infoButton.addEventListener("click", function() {
+        infoWindow.style.display = "block";
+      });
+
+      closeButton.addEventListener("click", function() {
+        infoWindow.style.display = "none";
+      });
+
+    });
+  </script>
+</head>
+<body>
+  <div id="viewDiv">
+    <div id="legendDiv"></div>
+  </div>
+  <div id="layerList"></div>
+</body>
+</html>
